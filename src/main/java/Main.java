@@ -1,0 +1,89 @@
+import com.sun.javafx.application.PlatformImpl;
+import javafx.application.Application;
+import javafx.application.Platform;
+import javafx.geometry.Insets;
+import javafx.scene.Scene;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundFill;
+import javafx.scene.layout.CornerRadii;
+import javafx.scene.layout.StackPane;
+import javafx.scene.paint.Color;
+import javafx.stage.Stage;
+import javafx.stage.StageStyle;
+import org.jnativehook.GlobalScreen;
+import org.jnativehook.NativeHookException;
+import org.jnativehook.keyboard.NativeKeyEvent;
+import org.jnativehook.keyboard.NativeKeyListener;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import static org.jnativehook.keyboard.NativeKeyEvent.*;
+
+public class Main extends Application implements NativeKeyListener {
+    public static void main(String[] args) {
+        launch(args);
+    }
+
+    private Stage stage;
+    private final List<Integer> keys = Arrays.asList(VC_ALT_L, VC_SHIFT_L, VC_V);
+    private List<Integer> expecting = new ArrayList<>(keys);
+    private boolean isShowEvent = false;
+
+    @Override
+    public void start(Stage primaryStage) {
+        Platform.setImplicitExit(false);
+        enableJnh();
+        this.stage = primaryStage;
+        if (stage.getStyle() != StageStyle.TRANSPARENT) {
+            stage.initStyle(StageStyle.TRANSPARENT);
+        }
+        stage.focusedProperty().addListener((ov, t, t1) -> {
+            if (t && stage.isShowing()) {
+                stage.hide();
+            }
+        });
+        stage.setAlwaysOnTop(true);
+        StackPane root = new StackPane();
+        root.setBackground(new Background(new BackgroundFill(Color.RED, CornerRadii.EMPTY, Insets.EMPTY)));
+        stage.setScene(new Scene(root, 300, 250));
+    }
+
+    private void enableJnh() {
+        try {
+            GlobalScreen.registerNativeHook();
+            GlobalScreen.addNativeKeyListener(this);
+        } catch (NativeHookException e) {
+            throw new IllegalStateException(e);
+        }
+        Logger logger = Logger
+            .getLogger(GlobalScreen.class.getPackage().getName());
+        logger.setLevel(Level.WARNING);
+        logger.setUseParentHandlers(false);
+    }
+
+    public void nativeKeyPressed(NativeKeyEvent ke) {
+        expecting.remove(new Integer(ke.getKeyCode()));
+        if (expecting.isEmpty()) {
+            isShowEvent = true;
+        }
+    }
+
+    public void nativeKeyReleased(NativeKeyEvent ke) {
+        if (keys.contains(ke.getKeyCode()) && !expecting.contains(ke.getKeyCode())) {
+            expecting.add(ke.getKeyCode());
+            if (isShowEvent && keys.size() == expecting.size()) {
+                PlatformImpl.runAndWait(() -> stage.show());
+                this.expecting = new ArrayList<>(keys);
+                isShowEvent = false;
+            }
+        }
+    }
+
+    public void nativeKeyTyped(NativeKeyEvent nativeKeyEvent) {
+
+    }
+}
