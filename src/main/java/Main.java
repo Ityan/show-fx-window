@@ -15,6 +15,9 @@ import org.jnativehook.NativeHookException;
 import org.jnativehook.keyboard.NativeKeyEvent;
 import org.jnativehook.keyboard.NativeKeyListener;
 
+import java.awt.*;
+import java.awt.event.InputEvent;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -24,11 +27,15 @@ import java.util.logging.Logger;
 import static org.jnativehook.keyboard.NativeKeyEvent.*;
 
 public class Main extends Application implements NativeKeyListener {
+    public Main() throws AWTException {
+    }
+
     public static void main(String[] args) {
         launch(args);
     }
 
     private Stage stage;
+    private final Robot robot = new Robot();
     private final List<Integer> keys = Arrays.asList(VC_ALT_L, VC_SHIFT_L, VC_V);
     private List<Integer> expecting = new ArrayList<>(keys);
     private boolean isShowEvent = false;
@@ -46,7 +53,6 @@ public class Main extends Application implements NativeKeyListener {
                 stage.hide();
             }
         });
-        stage.setAlwaysOnTop(true);
         StackPane root = new StackPane();
         root.setBackground(new Background(new BackgroundFill(Color.RED, CornerRadii.EMPTY, Insets.EMPTY)));
         stage.setScene(new Scene(root, 300, 250));
@@ -76,7 +82,21 @@ public class Main extends Application implements NativeKeyListener {
         if (keys.contains(ke.getKeyCode()) && !expecting.contains(ke.getKeyCode())) {
             expecting.add(ke.getKeyCode());
             if (isShowEvent && keys.size() == expecting.size()) {
-                PlatformImpl.runAndWait(() -> stage.show());
+                PlatformImpl.runAndWait(() -> {
+                    Point point = MouseInfo.getPointerInfo().getLocation();
+                    stage.setX(point.x);
+                    stage.setY(point.y);
+                    stage.show();
+                    stage.toFront();
+                    try {
+                        Thread.sleep(200);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    robot.mouseMove((int) stage.getX() + 1, (int) stage.getY() + 1) ;
+                    robot.mousePress(MouseEvent.BUTTON1_MASK);
+                    robot.mouseRelease(MouseEvent.BUTTON1_MASK);
+                });
                 this.expecting = new ArrayList<>(keys);
                 isShowEvent = false;
             }
