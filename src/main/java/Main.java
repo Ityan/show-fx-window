@@ -83,9 +83,9 @@ public class Main extends Application implements NativeKeyListener {
             expecting.add(ke.getKeyCode());
             if (isShowEvent && keys.size() == expecting.size()) {
                 PlatformImpl.runAndWait(() -> {
-                    Point point = MouseInfo.getPointerInfo().getLocation();
-                    stage.setX(point.x);
-                    stage.setY(point.y);
+//                    Point point = MouseInfo.getPointerInfo().getLocation();
+//                    stage.setX(point.x);
+//                    stage.setY(point.y);
                     stage.show();
                     stage.toFront();
                     try {
