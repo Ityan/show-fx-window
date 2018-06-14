@@ -89,11 +89,11 @@ public class Main extends Application implements NativeKeyListener {
                     stage.show();
                     stage.toFront();
                     try {
-                        Thread.sleep(200);
+                        Thread.sleep(500);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
-                    robot.mouseMove((int) stage.getX() + 1, (int) stage.getY() + 1) ;
+                    robot.mouseMove((int) stage.getX() + 150, (int) stage.getY() + 150) ;
                     robot.mousePress(MouseEvent.BUTTON1_MASK);
                     robot.mouseRelease(MouseEvent.BUTTON1_MASK);
                 });
