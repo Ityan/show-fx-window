@@ -45,18 +45,22 @@ public class Main extends Application implements NativeKeyListener {
         Platform.setImplicitExit(false);
         enableJnh();
         this.stage = primaryStage;
+
+        StackPane root = new StackPane();
+        root.setBackground(new Background(new BackgroundFill(Color.RED, CornerRadii.EMPTY, Insets.EMPTY)));
+        stage.setScene(new Scene(root, 300, 250));
+
         if (stage.getStyle() != StageStyle.TRANSPARENT) {
             stage.initStyle(StageStyle.TRANSPARENT);
         }
         stage.setAlwaysOnTop(true);
         stage.focusedProperty().addListener((ov, t, t1) -> {
-            if (t && stage.isShowing()) {
-                stage.hide();
+            if (t && stage.isShowing() && !stage.isIconified()) {
+                stage.setIconified(true);
             }
         });
-        StackPane root = new StackPane();
-        root.setBackground(new Background(new BackgroundFill(Color.RED, CornerRadii.EMPTY, Insets.EMPTY)));
-        stage.setScene(new Scene(root, 300, 250));
+//        stage.setIconified(true);
+        stage.show();
     }
 
     private void enableJnh() {
@@ -87,15 +91,7 @@ public class Main extends Application implements NativeKeyListener {
                     Point point = MouseInfo.getPointerInfo().getLocation();
                     stage.setX(point.x);
                     stage.setY(point.y);
-                    stage.show();
-                    try {
-                        Thread.sleep(500);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                    robot.mouseMove((int) stage.getX() + 1, (int) stage.getY() + 1) ;
-                    robot.mousePress(MouseEvent.BUTTON1_MASK);
-                    robot.mouseRelease(MouseEvent.BUTTON1_MASK);
+                    stage.setIconified(false);
                 });
                 this.expecting = new ArrayList<>(keys);
                 isShowEvent = false;
