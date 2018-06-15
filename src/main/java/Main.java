@@ -48,6 +48,7 @@ public class Main extends Application implements NativeKeyListener {
         if (stage.getStyle() != StageStyle.TRANSPARENT) {
             stage.initStyle(StageStyle.TRANSPARENT);
         }
+        stage.setAlwaysOnTop(true);
         stage.focusedProperty().addListener((ov, t, t1) -> {
             if (t && stage.isShowing()) {
                 stage.hide();
@@ -83,17 +84,16 @@ public class Main extends Application implements NativeKeyListener {
             expecting.add(ke.getKeyCode());
             if (isShowEvent && keys.size() == expecting.size()) {
                 PlatformImpl.runAndWait(() -> {
-//                    Point point = MouseInfo.getPointerInfo().getLocation();
-//                    stage.setX(point.x);
-//                    stage.setY(point.y);
+                    Point point = MouseInfo.getPointerInfo().getLocation();
+                    stage.setX(point.x);
+                    stage.setY(point.y);
                     stage.show();
-                    stage.toFront();
                     try {
                         Thread.sleep(500);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
-                    robot.mouseMove((int) stage.getX() + 150, (int) stage.getY() + 150) ;
+                    robot.mouseMove((int) stage.getX() + 1, (int) stage.getY() + 1) ;
                     robot.mousePress(MouseEvent.BUTTON1_MASK);
                     robot.mouseRelease(MouseEvent.BUTTON1_MASK);
                 });
