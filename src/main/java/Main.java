@@ -1,105 +1,64 @@
-import com.sun.javafx.application.PlatformImpl;
 import javafx.application.Application;
-import javafx.application.Platform;
-import javafx.geometry.Insets;
 import javafx.scene.Scene;
-import javafx.scene.layout.Background;
-import javafx.scene.layout.BackgroundFill;
-import javafx.scene.layout.CornerRadii;
-import javafx.scene.layout.StackPane;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
-import javafx.stage.Stage;
-import javafx.stage.StageStyle;
-import org.jnativehook.GlobalScreen;
-import org.jnativehook.NativeHookException;
-import org.jnativehook.keyboard.NativeKeyEvent;
-import org.jnativehook.keyboard.NativeKeyListener;
+import javafx.scene.shape.*;
+import javafx.stage.*;
 
-import java.awt.*;
-import java.awt.event.InputEvent;
-import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+public class Main  extends Application {
 
-import static org.jnativehook.keyboard.NativeKeyEvent.*;
+    private static final int shadowSize = 50;
 
-public class Main extends Application implements NativeKeyListener {
-    public Main() throws AWTException {
+    @Override public void start(final Stage stage) {
+        stage.initStyle(StageStyle.TRANSPARENT);
+        stage.setAlwaysOnTop(true);
+
+        StackPane stackPane = new StackPane(createShadowPane());
+        stackPane.setStyle(
+            "-fx-background-color: rgba(255, 255, 255, 0);" +
+                "-fx-background-insets: " + shadowSize + ";"
+        );
+
+        Scene scene = new Scene(stackPane, 450, 450);
+        scene.setFill(Color.TRANSPARENT);
+        stage.setScene(scene);
+        stage.show();
+    }
+
+    // Create a shadow effect as a halo around the pane and not within
+    // the pane's content area.
+    private Pane createShadowPane() {
+        Pane shadowPane = new Pane();
+        // a "real" app would do this in a CSS stylesheet.
+        shadowPane.setStyle(
+            "-fx-background-color: white;" +
+                "-fx-effect: dropshadow(gaussian, red, " + shadowSize + ", 0, 0, 0);" +
+                "-fx-background-insets: " + shadowSize + ";"
+        );
+
+        Rectangle innerRect = new Rectangle();
+        Rectangle outerRect = new Rectangle();
+        shadowPane.layoutBoundsProperty().addListener(
+            (observable, oldBounds, newBounds) -> {
+                innerRect.relocate(
+                    newBounds.getMinX() + shadowSize,
+                    newBounds.getMinY() + shadowSize
+                );
+                innerRect.setWidth(newBounds.getWidth() - shadowSize * 2);
+                innerRect.setHeight(newBounds.getHeight() - shadowSize * 2);
+
+                outerRect.setWidth(newBounds.getWidth());
+                outerRect.setHeight(newBounds.getHeight());
+
+                Shape clip = Shape.subtract(outerRect, innerRect);
+                shadowPane.setClip(clip);
+            }
+        );
+
+        return shadowPane;
     }
 
     public static void main(String[] args) {
         launch(args);
-    }
-
-    private Stage stage;
-    private final Robot robot = new Robot();
-    private final List<Integer> keys = Arrays.asList(VC_ALT_L, VC_SHIFT_L, VC_V);
-    private List<Integer> expecting = new ArrayList<>(keys);
-    private boolean isShowEvent = false;
-
-    @Override
-    public void start(Stage primaryStage) {
-        Platform.setImplicitExit(false);
-        enableJnh();
-        this.stage = primaryStage;
-
-        StackPane root = new StackPane();
-        root.setBackground(new Background(new BackgroundFill(Color.RED, CornerRadii.EMPTY, Insets.EMPTY)));
-        stage.setScene(new Scene(root, 300, 250));
-
-        if (stage.getStyle() != StageStyle.TRANSPARENT) {
-            stage.initStyle(StageStyle.TRANSPARENT);
-        }
-        stage.setAlwaysOnTop(true);
-        stage.focusedProperty().addListener((ov, t, t1) -> {
-            if (t && stage.isShowing() && !stage.isIconified()) {
-                stage.setIconified(true);
-            }
-        });
-//        stage.setIconified(true);
-        stage.show();
-    }
-
-    private void enableJnh() {
-        try {
-            GlobalScreen.registerNativeHook();
-            GlobalScreen.addNativeKeyListener(this);
-        } catch (NativeHookException e) {
-            throw new IllegalStateException(e);
-        }
-        Logger logger = Logger
-            .getLogger(GlobalScreen.class.getPackage().getName());
-        logger.setLevel(Level.WARNING);
-        logger.setUseParentHandlers(false);
-    }
-
-    public void nativeKeyPressed(NativeKeyEvent ke) {
-        expecting.remove(new Integer(ke.getKeyCode()));
-        if (expecting.isEmpty()) {
-            isShowEvent = true;
-        }
-    }
-
-    public void nativeKeyReleased(NativeKeyEvent ke) {
-        if (keys.contains(ke.getKeyCode()) && !expecting.contains(ke.getKeyCode())) {
-            expecting.add(ke.getKeyCode());
-            if (isShowEvent && keys.size() == expecting.size()) {
-                PlatformImpl.runAndWait(() -> {
-                    Point point = MouseInfo.getPointerInfo().getLocation();
-                    stage.setX(point.x);
-                    stage.setY(point.y);
-                    stage.setIconified(false);
-                });
-                this.expecting = new ArrayList<>(keys);
-                isShowEvent = false;
-            }
-        }
-    }
-
-    public void nativeKeyTyped(NativeKeyEvent nativeKeyEvent) {
-
     }
 }
